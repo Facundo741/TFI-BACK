@@ -5,7 +5,13 @@ import {
   getAllPedidosController,
   getPedidoByIdController,
   updatePedidoEstadoController,
-  deletePedidoController
+  deletePedidoController,
+  getCarritoUsuarioController,
+  agregarAlCarritoController,
+  eliminarDelCarritoController,
+  confirmarCarritoController,
+  vaciarCarritoController,
+  actualizarCantidadCarritoController
 } from '../controllers/order.controller';
 import { verifyToken } from '../middleware/auth';
 import { checkAdmin } from '../middleware/checkAdmin';
@@ -25,5 +31,17 @@ router.get('/:idPedido', verifyToken, getPedidoByIdController);
 router.patch('/:idPedido/estado', verifyToken, checkAdmin, updatePedidoEstadoController);
 
 router.delete('/:idPedido', verifyToken, checkAdmin, deletePedidoController);
+
+router.get('/usuario/:idUsuario/carrito', verifyToken, getCarritoUsuarioController);
+
+router.post('/usuario/:idUsuario/carrito', verifyToken, agregarAlCarritoController);
+
+router.delete('/usuario/:idUsuario/carrito/producto/:idProducto', verifyToken, eliminarDelCarritoController);
+
+router.post('/usuario/:idUsuario/carrito/confirmar', verifyToken, confirmarCarritoController);
+
+router.delete('/usuario/:idUsuario/carrito', verifyToken, vaciarCarritoController);
+
+router.patch('/usuario/:idUsuario/carrito/producto/:idProducto', verifyToken, actualizarCantidadCarritoController);
 
 export default router;

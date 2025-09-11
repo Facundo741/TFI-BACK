@@ -5,7 +5,13 @@ import {
   getAllPedidos,
   getPedidoById,
   updatePedidoEstado,
-  deletePedido
+  deletePedido,
+  getCarritoUsuario,
+  agregarAlCarrito,
+  eliminarDelCarrito,
+  confirmarCarrito,
+  vaciarCarrito,
+  actualizarCantidadCarrito
 } from '../services/order.service';
 
 export const createPedidoController = async (req: Request, res: Response): Promise<void> => {
@@ -119,5 +125,117 @@ export const deletePedidoController = async (req: Request, res: Response): Promi
   } catch (error) {
     console.error('Error deleting pedido:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getCarritoUsuarioController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+    
+    if (isNaN(idUsuario)) {
+      res.status(400).json({ error: 'ID de usuario inválido' });
+      return;
+    }
+
+    const carrito = await getCarritoUsuario(idUsuario);
+    res.json(carrito);
+  } catch (error) {
+    console.error('Error getting carrito:', error);
+    res.status(500).json({ error: 'Error obteniendo carrito' });
+  }
+};
+
+export const agregarAlCarritoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+    const { id_producto, cantidad } = req.body;
+
+    if (isNaN(idUsuario)) {
+      res.status(400).json({ error: 'ID de usuario inválido' });
+      return;
+    }
+
+    if (!id_producto || !cantidad) {
+      res.status(400).json({ error: 'ID de producto y cantidad son requeridos' });
+      return;
+    }
+
+    const carrito = await agregarAlCarrito(idUsuario, id_producto, cantidad);
+    res.json(carrito);
+  } catch (error: any) {
+    console.error('Error adding to cart:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const eliminarDelCarritoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+    const idProducto = parseInt(req.params.idProducto);
+
+    if (isNaN(idUsuario) || isNaN(idProducto)) {
+      res.status(400).json({ error: 'IDs inválidos' });
+      return;
+    }
+
+    const carrito = await eliminarDelCarrito(idUsuario, idProducto);
+    res.json(carrito);
+  } catch (error: any) {
+    console.error('Error removing from cart:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const confirmarCarritoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+    const pedidoData = req.body;
+
+    if (isNaN(idUsuario)) {
+      res.status(400).json({ error: 'ID de usuario inválido' });
+      return;
+    }
+
+    const pedidoConfirmado = await confirmarCarrito(idUsuario, pedidoData);
+    res.json(pedidoConfirmado);
+  } catch (error: any) {
+    console.error('Error confirming cart:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const vaciarCarritoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+
+    if (isNaN(idUsuario)) {
+      res.status(400).json({ error: 'ID de usuario inválido' });
+      return;
+    }
+
+    await vaciarCarrito(idUsuario);
+    res.json({ message: 'Carrito vaciado correctamente' });
+  } catch (error: any) {
+    console.error('Error emptying cart:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const actualizarCantidadCarritoController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const idUsuario = parseInt(req.params.idUsuario);
+    const idProducto = parseInt(req.params.idProducto);
+    const { cantidad } = req.body;
+
+    if (isNaN(idUsuario) || isNaN(idProducto)) {
+      res.status(400).json({ error: 'IDs inválidos' });
+      return;
+    }
+
+    const carrito = await actualizarCantidadCarrito(idUsuario, idProducto, cantidad);
+    res.json(carrito);
+  } catch (error: any) {
+    console.error('Error updating cart quantity:', error);
+    res.status(400).json({ error: error.message });
   }
 };
