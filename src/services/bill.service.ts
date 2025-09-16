@@ -252,13 +252,10 @@ export const getEstadisticasFacturacion = async (): Promise<any> => {
   const result = await pool.query(
     `SELECT 
        COUNT(*) as total_facturas,
-       SUM(total) as ingresos_totales,
-       AVG(total) as promedio_por_factura,
-       estado_factura,
-       COUNT(*) FILTER (WHERE fecha_emision >= CURRENT_DATE - INTERVAL '30 days') as facturas_ultimo_mes
+       COALESCE(SUM(total),0) as ingresos_totales,
+       COALESCE(AVG(total),0) as promedio_por_factura
      FROM facturas
-     GROUP BY estado_factura`
+     WHERE estado_factura = 'pagada'`
   );
-  
-  return result.rows;
+  return result.rows[0];
 };
