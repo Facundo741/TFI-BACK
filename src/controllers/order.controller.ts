@@ -221,21 +221,34 @@ export const vaciarCarritoController = async (req: Request, res: Response): Prom
   }
 };
 
-export const actualizarCantidadCarritoController = async (req: Request, res: Response): Promise<void> => {
+export const actualizarCantidadCarritoController = async (req: Request, res: Response) => {
   try {
-    const idUsuario = parseInt(req.params.idUsuario);
-    const idProducto = parseInt(req.params.idProducto);
+    
     const { cantidad } = req.body;
+    const { idUsuario, idProducto } = req.params; 
 
-    if (isNaN(idUsuario) || isNaN(idProducto)) {
-      res.status(400).json({ error: 'IDs inválidos' });
-      return;
+    if (cantidad === undefined || cantidad === null) {
+      return res.status(400).json({ error: "La cantidad es requerida" });
     }
 
-    const carrito = await actualizarCantidadCarrito(idUsuario, idProducto, cantidad);
-    res.json(carrito);
-  } catch (error: any) {
-    console.error('Error updating cart quantity:', error);
-    res.status(400).json({ error: error.message });
+    const cantidadInt = parseInt(cantidad, 10);
+    
+    if (isNaN(cantidadInt) || cantidadInt < 1) {
+      return res.status(400).json({ error: "La cantidad debe ser un número entero mayor o igual a 1" });
+    }
+
+    const usuarioId = parseInt(idUsuario, 10);
+    const productoId = parseInt(idProducto, 10);
+
+    if (isNaN(usuarioId) || isNaN(productoId)) {
+      return res.status(400).json({ error: "IDs inválidos" });
+    }
+    
+    await actualizarCantidadCarrito(usuarioId, productoId, cantidadInt);
+
+    res.json({ message: "Cantidad actualizada" });
+  } catch (err) {
+    res.status(500).json({ error: "Error actualizando cantidad del carrito" });
   }
 };
+

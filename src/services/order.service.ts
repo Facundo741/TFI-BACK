@@ -507,74 +507,17 @@ export const vaciarCarrito = async (idUsuario: number): Promise<void> => {
   }
 };
 
-export const actualizarCantidadCarrito = async (idUsuario: number, idProducto: number, cantidad: number): Promise<PedidoConDetalles> => {
-  const client = await pool.connect();
-  
-  try {
-    await client.query('BEGIN');
-
-    if (cantidad < 1) {
-      throw new Error('La cantidad debe ser al menos 1');
-    }
-
-    const pedidoResult = await client.query(
-      `SELECT * FROM pedidos 
-       WHERE id_usuario = $1 AND estado = 'pendiente' 
-       LIMIT 1`,
-      [idUsuario]
-    );
-
-    if (pedidoResult.rows.length === 0) {
-      throw new Error('Carrito no encontrado');
-    }
-
-    const pedido = pedidoResult.rows[0];
-
-    const productResult = await client.query(
-      'SELECT precio, stock FROM productos WHERE id_producto = $1',
-      [idProducto]
-    );
-
-    if (productResult.rows.length === 0) {
-      throw new Error('Producto no encontrado');
-    }
-
-    const producto = productResult.rows[0];
-    if (producto.stock < cantidad) {
-      throw new Error('Stock insuficiente');
-    }
-
-    await client.query(
-      `UPDATE pedido_detalle 
-       SET cantidad = $1, subtotal_linea = $1 * precio_unitario 
-       WHERE id_pedido = $2 AND id_producto = $3`,
-      [cantidad, pedido.id_pedido, idProducto]
-    );
-
-    const detallesResult = await client.query(
-      'SELECT SUM(subtotal_linea) as subtotal FROM pedido_detalle WHERE id_pedido = $1',
-      [pedido.id_pedido]
-    );
-    
-    const subtotal = parseFloat(detallesResult.rows[0].subtotal) || 0;
-    const costoEnvio = Math.max(subtotal * 0.1, 500);
-    const total = subtotal + costoEnvio;
-
-    await client.query(
-      'UPDATE pedidos SET subtotal = $1, costo_envio = $2, total = $3 WHERE id_pedido = $4',
-      [subtotal, costoEnvio, total, pedido.id_pedido]
-    );
-
-    await client.query('COMMIT');
-
-    const carrito = await getCarritoUsuario(idUsuario);
-    if (!carrito) throw new Error('Carrito no encontrado después de actualizar la cantidad');
-    return carrito;
-
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+export const actualizarCantidadCarrito = async (idUsuario: number, idProducto: number, cantidad: number) => {
+  await pool.query(
+    `UPDATE pedido_detalle pd
+     SET cantidad = $1::int,
+         subtotal_linea = $1::numeric * precio_unitario
+     FROM pedidos p
+     WHERE pd.id_pedido = p.id_pedido
+       AND p.id_usuario = $2
+       AND p.estado = 'pendiente'
+       AND pd.id_producto = $3`,
+    [cantidad, idUsuario, idProducto]
+  );
 };
+
