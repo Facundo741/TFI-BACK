@@ -6,7 +6,9 @@ import {
   patchProducto,
   removeProducto,
   searchProductosController,
-  getProductosByCategoriaController
+  getProductosByCategoriaController,
+  reduceStockController,
+  increaseStockController
 } from '../controllers/product.controller';
 import { verifyToken } from '../middleware/auth';
 import { checkAdmin } from '../middleware/checkAdmin';
@@ -22,5 +24,7 @@ router.get('/:id', getProducto);
 router.post('/create', verifyToken, checkAdmin, validateProductoCreation, handleValidationErrors, addProducto);
 router.patch('/:id', verifyToken, checkAdmin, validateProductoUpdate, handleValidationErrors, patchProducto);
 router.delete('/:id', verifyToken, checkAdmin, removeProducto);
+router.patch('/:id/reduce-stock', verifyToken, reduceStockController);
+router.patch('/:id/increase-stock', verifyToken, increaseStockController);
 
 export default router;

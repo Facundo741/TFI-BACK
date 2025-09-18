@@ -123,3 +123,11 @@ export const getProductosByCategoria = async (categoria: string): Promise<Produc
   );
   return result.rows;
 };
+
+export const increaseStock = async (id: number, cantidad: number) => {
+  const result = await pool.query(
+    'UPDATE productos SET stock = stock + $2 WHERE id_producto = $1 RETURNING *',
+    [id, cantidad]
+  );
+  return result.rows[0] || null;
+};

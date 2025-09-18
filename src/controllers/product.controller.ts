@@ -7,8 +7,10 @@ import {
   deleteProducto,
   updateStock,
   searchProductos,
-  getProductosByCategoria
+  getProductosByCategoria,
+  increaseStock
 } from '../services/product.service';
+
 
 export const getProductos = async (_req: Request, res: Response): Promise<void> => {
   try {
@@ -145,5 +147,51 @@ export const getProductosByCategoriaController = async (req: Request, res: Respo
   } catch (error) {
     console.error('Error getting productos by category:', error);
     res.status(500).json({ error: 'Error obteniendo productos por categoría' });
+  }
+};
+
+export const reduceStockController = async (req: Request, res: Response): Promise<void> => {
+  const id = parseInt(req.params.id);
+  const { cantidad } = req.body;
+
+  if (isNaN(id) || !cantidad || cantidad <= 0) {
+    res.status(400).json({ error: "ID o cantidad inválida" });
+    return;
+  }
+
+  try {
+    const productoActualizado = await updateStock(id, cantidad);
+    if (!productoActualizado) {
+      res.status(404).json({ error: "Producto no encontrado" });
+      return;
+    }
+    res.json(productoActualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error actualizando stock" });
+  }
+};
+
+export const increaseStockController = async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const { cantidad } = req.body;
+
+  if (isNaN(id) || !cantidad || cantidad <= 0) {
+    res.status(400).json({ error: "ID o cantidad inválida" });
+    return;
+  }
+
+  try {
+    const productoActualizado = await increaseStock(id, cantidad);
+
+    if (!productoActualizado) {
+      res.status(404).json({ error: "Producto no encontrado" });
+      return;
+    }
+
+    res.json(productoActualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error actualizando stock" });
   }
 };
