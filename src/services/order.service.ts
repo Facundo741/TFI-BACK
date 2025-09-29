@@ -331,14 +331,36 @@ export const confirmarCarrito = async (idUsuario: number, pedidoData: any): Prom
       );
     }
 
+    const subtotal = typeof carrito.subtotal === 'string' 
+      ? parseFloat(carrito.subtotal) 
+      : Number(carrito.subtotal);
+    
+    const iva = parseFloat((subtotal * 0.21).toFixed(2));
+    const total = parseFloat((subtotal + iva).toFixed(2));
+
+    if (isNaN(subtotal) || isNaN(iva) || isNaN(total)) {
+      throw new Error('Error en el cálculo de montos de la factura');
+    }
+
+
+    const facturaInsert = await client.query(
+      `INSERT INTO facturas (id_pedido, numero_factura, fecha_emision, estado_factura, subtotal, iva, total)
+      VALUES ($1, CONCAT('FAC-', EXTRACT(YEAR FROM NOW()), '-', LPAD(nextval('factura_seq')::text, 6, '0')), NOW(), 'pendiente', $2, $3, $4)
+      RETURNING *`,
+      [carrito.id_pedido, subtotal, iva, total]
+    );
+
+
     await client.query('COMMIT');
 
     const pedidoConfirmado = await getPedidoById(carrito.id_pedido);
     if (!pedidoConfirmado) throw new Error('Pedido confirmado pero no se pudo recuperar');
+    
     return pedidoConfirmado;
 
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Error en confirmarCarrito:', error);
     throw error;
   } finally {
     client.release();
