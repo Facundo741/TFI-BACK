@@ -3,7 +3,7 @@ export interface Factura {
   id_pedido: number;
   numero_factura: string;
   fecha_emision: Date;
-  estado_factura: 'pendiente' | 'pagada' | 'cancelada';
+  estado_factura: 'pendiente' | 'confirmado' | 'cancelada';
   subtotal: number;
   iva: number;
   total: number;
