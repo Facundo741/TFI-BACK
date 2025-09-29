@@ -9,7 +9,7 @@ export const getVentasPorPeriodo = async (fechaInicio: string, fechaFin: string)
        AVG(f.total) as promedio_venta
      FROM facturas f
      WHERE f.fecha_emision BETWEEN $1 AND $2
-       AND f.estado_factura = 'pagada'
+       AND f.estado_factura IN ('pendiente', 'pagada')  
      GROUP BY DATE(f.fecha_emision)
      ORDER BY fecha`,
     [fechaInicio, fechaFin]
@@ -42,13 +42,14 @@ export const getIngresosTotales = async (): Promise<any> => {
     `SELECT 
        EXTRACT(YEAR FROM f.fecha_emision) as año,
        EXTRACT(MONTH FROM f.fecha_emision) as mes,
+       TO_CHAR(f.fecha_emision, 'YYYY-MM') as mes_formateado,
        COUNT(*) as total_facturas,
        SUM(f.total) as ingresos_totales,
        SUM(f.subtotal) as subtotal,
        SUM(f.iva) as iva
      FROM facturas f
-     WHERE f.estado_factura = 'pagada'
-     GROUP BY año, mes
+     WHERE f.estado_factura IN ('pendiente', 'pagada') 
+     GROUP BY año, mes, mes_formateado
      ORDER BY año DESC, mes DESC`
   );
   return result.rows;
@@ -112,9 +113,10 @@ export const getMetricasGenerales = async (): Promise<any> => {
     `SELECT 
        (SELECT COUNT(*) FROM users WHERE role = 'user') as total_clientes,
        (SELECT COUNT(*) FROM pedidos WHERE estado != 'pendiente') as total_pedidos,
+       (SELECT COUNT(*) FROM facturas WHERE estado_factura IN ('pendiente', 'pagada')) as facturas_totales,  
        (SELECT COUNT(*) FROM facturas WHERE estado_factura = 'pagada') as facturas_pagadas,
-       (SELECT SUM(total) FROM facturas WHERE estado_factura = 'pagada') as ingresos_totales,
-       (SELECT AVG(total) FROM facturas WHERE estado_factura = 'pagada') as promedio_venta,
+       (SELECT SUM(total) FROM facturas WHERE estado_factura IN ('pendiente', 'pagada')) as ingresos_totales,  
+       (SELECT AVG(total) FROM facturas WHERE estado_factura IN ('pendiente', 'pagada')) as promedio_venta,  
        (SELECT COUNT(*) FROM productos WHERE stock <= 5) as productos_stock_critico`
   );
   return result.rows[0];
